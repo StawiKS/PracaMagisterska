@@ -1,0 +1,54 @@
+import pandas as pd
+import re
+
+# Wczytanie danych z pliku Excel
+path = r'C:\Users\Albert Stawicki\Desktop\Magisterka\Dane historyczne.xlsx'
+df = pd.read_excel(path)
+
+# Usunięcie spacji na końcu tekstu w kolumnie "Modelt, typ"
+df["Modelt, typ"] = df["Modelt, typ"].str.strip()
+
+# Zamiana wartości w członach "Modelt, typ" przed filtrowaniem
+df["Modelt, typ"] = df["Modelt, typ"].str.replace(r"Edition\b", "Edition-S", regex=True)
+df["Modelt, typ"] = df["Modelt, typ"].str.replace(r"Life\+", "Life", regex=True)
+df["Modelt, typ"] = df["Modelt, typ"].str.replace(r"Bussines\b", "Business", regex=True)
+df["Modelt, typ"] = df["Modelt, typ"].str.replace(r"Cool\+", "Cool", regex=True)
+df["Modelt, typ"] = df["Modelt, typ"].str.replace("Edition-S-S", "Edition-S", regex=True)
+df["Modelt, typ"] = df["Modelt, typ"].str.replace(r"Energy\+", "Energy", regex=True)
+df["Modelt, typ"] = df["Modelt, typ"].str.replace(r"Lease\+", "Lease", regex=True)
+
+# Podział tekstu na części
+df[["Część 1", "Część 2"]] = df["Modelt, typ"].str.split(n=1, expand=True)
+
+# Zamiana "1,33" na "1.33" w drugim członie
+df["Część 2"] = df["Część 2"].str.replace("1,33", "1.33")
+
+# Formatowanie członów tekstu
+df["Część 1"] = df["Część 1"].str.title()
+df["Część 2"] = df["Część 2"].str.title()
+
+# Połączenie dwóch członów w jeden tekst
+df["Połączony tekst"] = df["Część 1"] + " " + df["Część 2"]
+
+# Odfiltrowanie DataFrame tak, aby pozostawić tylko te wiersze, które odpowiadają wartościom z 'Połączony tekst' występującym więcej niż raz w podsumowaniu
+counts = df['Połączony tekst'].value_counts()
+df_final = df[df['Połączony tekst'].isin(counts[counts > 1].index)]
+
+print(df_final.shape[0])  # Wypisz ilość wierszy po filtracji
+
+print("Przed odfiltrowaniem: ", len(df))
+
+df_filtered = df[df['Połączony tekst'].map(df['Połączony tekst'].value_counts()) > 1]
+
+# Zapis do pliku Excel
+df_filtered.to_excel("C:/Users/Albert Stawicki/Desktop/Magisterka/wyjście.xlsx", index=False)
+
+# Podziel tekst na człony
+df_filtered['człony'] = df_filtered['Połączony tekst'].str.split()
+
+# Weź pierwsze dwa człony i połącz je z powrotem
+df_filtered['pierwsze_dwa_człony'] = df_filtered['człony'].apply(lambda x: ' '.join(x[:2]))
+
+# Policz liczebność dla pierwszych dwóch członów
+liczebnosc_dwa_człony = df_filtered['pierwsze_dwa_człony'].value_counts()
+print(liczebnosc_dwa_człony)
