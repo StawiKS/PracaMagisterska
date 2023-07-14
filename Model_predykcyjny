@@ -1,0 +1,49 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.utils import resample
+from datetime import datetime
+import pickle
+import numpy as np
+
+# Wczytanie danych
+df = pd.read_excel('C:/Users/alber/Desktop/Magisterka/wyjscie.xlsx')
+
+# Bootstrapping
+df = resample(df, replace=True, n_samples=len(df), random_state=42)
+
+# Dodanie nowych cech
+df['WiekSamochodu'] = datetime.now().year - df[' Data pierwszej rejestracji (miesiąc. rok począwszy od 2000)']
+df['PrzebiegNaRok'] = df['Przebieg, km'] / df['WiekSamochodu']
+
+# Określenie, które kolumny są numeryczne, a które kategoryczne
+num_cols = ['Przebieg, km', 'WiekSamochodu', 'PrzebiegNaRok']
+cat_cols = ['Modelt, typ']
+
+# Definicja przepływu pracy dla kolumn numerycznych i kategorycznych
+numeric_transformer = Pipeline(steps=[('imputer', SimpleImputer(strategy='median'))])
+categorical_transformer = Pipeline(steps=[('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
+                                          ('onehot', OneHotEncoder(handle_unknown='ignore'))])
+
+preprocessor = ColumnTransformer(transformers=[('num', numeric_transformer, num_cols),
+                                               ('cat', categorical_transformer, cat_cols)])
+
+# Podział na zbiór uczący i testowy
+X = df.drop('Cena w zł', axis=1)  # wszystkie kolumny oprócz 'Cena w zł'
+y = df['Cena w zł']  # tylko kolumna 'Cena w zł'
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Trenowanie modelu
+rf = Pipeline(steps=[('preprocessor', preprocessor),
+                     ('regressor', RandomForestRegressor(n_estimators=200, max_depth=None, 
+                                                         min_samples_leaf=1, max_features='sqrt', 
+                                                         random_state=42))])
+rf.fit(X_train, y_train)
+
+# Zapisanie modelu
+filename = 'C:/Users/alber/Desktop/Magisterka/model.sav'
+pickle.dump(rf, open(filename, 'wb'))
