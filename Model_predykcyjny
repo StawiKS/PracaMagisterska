@@ -24,6 +24,9 @@ df['PrzebiegNaRok'] = df['Przebieg, km'] / df['WiekSamochodu']
 num_cols = ['Przebieg, km', 'WiekSamochodu', 'PrzebiegNaRok']
 cat_cols = ['Modelt, typ']
 
+# Teraz ograniczamy df do tylko wybranych kolumn
+df = df[num_cols + cat_cols + ['Cena w zł']]
+
 # Definicja przepływu pracy dla kolumn numerycznych i kategorycznych
 numeric_transformer = Pipeline(steps=[('imputer', SimpleImputer(strategy='median'))])
 categorical_transformer = Pipeline(steps=[('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
@@ -45,5 +48,5 @@ rf = Pipeline(steps=[('preprocessor', preprocessor),
 rf.fit(X_train, y_train)
 
 # Zapisanie modelu
-filename = 'C:/Users/alber/Desktop/Magisterka/model.sav'
+filename = 'C:/Users/alber/Desktop/Magisterka/model_new.sav'
 pickle.dump(rf, open(filename, 'wb'))
