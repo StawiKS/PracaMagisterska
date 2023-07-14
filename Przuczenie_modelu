@@ -1,0 +1,35 @@
+import pandas as pd
+import pickle
+from datetime import datetime
+
+# Wczytanie modelu
+filename = 'C:/Users/alber/Desktop/Magisterka/model_new.sav'
+loaded_model = pickle.load(open(filename, 'rb'))
+
+# Wczytanie nowych danych
+new_data = pd.read_excel('C:/Users/alber/Desktop/Magisterka/wyjście1.xlsx')
+
+# Dodanie nowych cech
+new_data['WiekSamochodu'] = datetime.now().year - new_data[' Data pierwszej rejestracji (miesiąc. rok począwszy od 2000)']
+
+# Zmieniamy wartości 0 na 1, aby uniknąć dzielenia przez zero
+new_data['WiekSamochodu'] = new_data['WiekSamochodu'].replace(0, 1)
+
+# Obliczamy PrzebiegNaRok po zamianie zer
+new_data['PrzebiegNaRok'] = new_data['Przebieg, km'] / new_data['WiekSamochodu']
+
+# Określenie, które kolumny są numeryczne, a które kategoryczne
+num_cols = ['Przebieg, km', 'WiekSamochodu', 'PrzebiegNaRok']
+cat_cols = ['Modelt, typ']
+
+# Teraz ograniczamy new_data do tylko wybranych kolumn
+predict_data = new_data[num_cols + cat_cols]
+
+# Zastosowanie modelu do przewidywania
+new_predictions = loaded_model.predict(predict_data)
+
+# Dodanie przewidywań do ramki danych jako nowej kolumny
+new_data['Przewidywania'] = new_predictions
+
+# Eksportowanie ramki danych do pliku Excel
+new_data.to_excel('C:/Users/alber/Desktop/Magisterka/Predykcja.xlsx', index = False)
