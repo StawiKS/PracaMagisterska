@@ -1,0 +1,23 @@
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
+import time
+
+# Ustawienie sterownika
+webdriver_service = Service(ChromeDriverManager().install())
+driver = webdriver.Chrome(service=webdriver_service)
+
+# Przejście do strony
+driver.get('https://en.wikipedia.org/wiki/Selenium_(software)')
+
+time.sleep(2)  # krótka przerwa, żeby strona mogła się załadować
+
+# Znalezienie wszystkich nagłówków na stronie
+headers = driver.find_elements(By.XPATH, '//h1 | //h2 | //h3')
+
+# Wydrukowanie nagłówków
+for header in headers:
+    print(header.text)
+
+driver.quit()
